@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Exam Countdown & Running Clock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0B0F19;
+      --bg-card: #151C2C;
+      --bg-card-border: #222C40;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --accent: #10B981;
+      --accent-glow: rgba(16, 185, 129, 0.25);
+      --accent-blue: #3B82F6;
+      --header-bg: #111827;
+      --input-bg: #1F2937;
+      --input-border: #374151;
+      --clock-face: #1E293B;
+      --clock-hand: #F3F4F6;
+      --clock-second: #EF4444;
+      --badge-bg: #1E293B;
+    }
+
+    [data-theme="light"] {
+      --bg-main: #F3F4F6;
+      --bg-card: #FFFFFF;
+      --bg-card-border: #E5E7EB;
+      --text-main: #111827;
+      --text-muted: #6B7280;
+      --accent: #059669;
+      --accent-glow: rgba(5, 150, 105, 0.15);
+      --accent-blue: #2563EB;
+      --header-bg: #FFFFFF;
+      --input-bg: #F9FAFB;
+      --input-border: #D1D5DB;
+      --clock-face: #F8FAFC;
+      --clock-hand: #1E293B;
+      --clock-second: #DC2626;
+      --badge-bg: #E5E7EB;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Top Bar Header */
+    header {
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--bg-card-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 64px;
+      flex-shrink: 0;
+    }
+
+    .school-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .school-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .exam-title-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      background-color: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background-color: var(--input-bg);
+      border-color: var(--accent-blue);
+    }
+
+    .btn-primary {
+      background-color: var(--accent-blue);
+      color: #FFFFFF;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    /* Main Widescreen Layout */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      height: calc(100vh - 108px);
+      align-items: center;
+    }
+
+    /* Analog Clock Card */
+    .clock-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .analog-clock-container {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin-bottom: 16px;
+    }
+
+    canvas#analogClock {
+      width: 100%;
+      height: 100%;
+    }
+
+    .digital-time-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+    }
+
+    .date-display {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* Central Timer Card */
+    .timer-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 20px;
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      height: 100%;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .subject-pill {
+      background-color: var(--badge-bg);
+      color: var(--accent-blue);
+      border: 1px solid var(--bg-card-border);
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+
+    .status-badge.upcoming {
+      background-color: rgba(59, 130, 246, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid var(--accent-blue);
+    }
+
+    .status-badge.active {
+      background-color: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    .status-badge.ended {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      border: 1px solid #EF4444;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .countdown-display-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    .main-countdown {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(3.5rem, 8vw, 7rem);
+      font-weight: 800;
+      color: var(--accent);
+      text-shadow: 0 0 30px var(--accent-glow);
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .timer-sub-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .sub-box {
+      background-color: var(--bg-main);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 10px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .sub-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .sub-lbl {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .exam-details-strip {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      width: 100%;
+      padding-top: 12px;
+      border-top: 1px solid var(--bg-card-border);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .detail-item strong {
+      color: var(--text-main);
+    }
+
+    /* Footer Copyright Bar */
+    footer {
+      height: 44px;
+      background-color: var(--header-bg);
+      border-top: 1px solid var(--bg-card-border);
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .creator-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--badge-bg);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      border: 1px solid var(--bg-card-border);
+    }
+
+    .apple-icon {
+      color: var(--accent-blue);
+      font-size: 0.9rem;
+    }
+
+    /* Settings Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      background-color: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <div class="school-info">
+      <div class="school-name" id="displaySchool">SJK(T) LORONG JAVA</div>
+      <div class="exam-title-text" id="displayExamTitle">MATRIKS PEMBELAJARAN TAHUN 2 SESI 2026</div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn" onclick="openShareModal()">
+        <span>🔗</span> Share Link
+      </button>
+      <button class="btn btn-primary" onclick="openSettings()">
+        <span>⚙️</span> Settings
+      </button>
+      <button class="btn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
+        <span id="themeIcon">☀️</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Widescreen Layout -->
+  <main>
+    <!-- Analog Clock Panel -->
+    <div class="clock-card">
+      <div class="card-label">⏰ Running Clock</div>
+      <div class="analog-clock-container">
+        <canvas id="analogClock" width="160" height="160"></canvas>
+      </div>
+      <div class="digital-time-display" id="digitalClockTime">00:00:00 AM</div>
+      <div class="date-display" id="digitalClockDate">Monday, Jan 1, 2026</div>
+    </div>
+
+    <!-- Main Countdown Panel -->
+    <div class="timer-card">
+      <div>
+        <span class="subject-pill" id="displaySubject">MATEMATIK SJK(T)</span>
+      </div>
+
+      <div class="status-badge upcoming" id="statusBadge">EXAM COUNTDOWN</div>
+
+      <div class="countdown-display-wrapper">
+        <div class="main-countdown" id="mainCountdownDisplay">00:00:00</div>
+
+        <div class="timer-sub-grid">
+          <div class="sub-box">
+            <div class="sub-val" id="daysVal">00</div>
+            <div class="sub-lbl">Days</div>
+          </div>
+          <div class="sub-box">
+            <div class="sub-val" id="hoursVal">00</div>
+            <div class="sub-lbl">Hours</div>
+          </div>
+          <div class="sub-box">
+            <div class="sub-val" id="minsVal">00</div>
+            <div class="sub-lbl">Mins</div>
+          </div>
+          <div class="sub-box">
+            <div class="sub-val" id="secsVal">00</div>
+            <div class="sub-lbl">Secs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="exam-details-strip">
+        <div class="detail-item">Start: <strong id="stripStart">--:--</strong></div>
+        <div class="detail-item">Duration: <strong id="stripDuration">180 mins</strong></div>
+        <div class="detail-item">End: <strong id="stripEnd">--:--</strong></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer Copyright -->
+  <footer>
+    <div>Exam Countdown Timer & Running Clock Display</div>
+    <div class="creator-badge">
+      <span class="apple-icon"></span> Created by Prem Raj (Apple Learning Coach)
+    </div>
+  </footer>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Customize Exam Schedule</div>
+        <button class="btn" onclick="closeSettings()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">School Name</label>
+        <input type="text" id="inputSchool" class="form-control" value="SJK(T) LORONG JAVA">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Exam Title</label>
+        <input type="text" id="inputExamTitle" class="form-control" value="MATRIKS PEMBELAJARAN TAHUN 2 SESI 2026">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <select id="selectSubject" class="form-control" onchange="handleSubjectSelect(this.value)">
+          <option value="MATEMATIK SJK(T)">MATEMATIK SJK(T)</option>
+          <option value="BAHASA MELAYU">BAHASA MELAYU</option>
+          <option value="BAHASA INGGERIS">BAHASA INGGERIS</option>
+          <option value="SAINS">SAINS</option>
+          <option value="BAHASA TAMIL">BAHASA TAMIL</option>
+          <option value="CUSTOM">-- Custom Subject --</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="customSubjectGroup" style="display: none;">
+        <label class="form-label">Custom Subject Name</label>
+        <input type="text" id="inputCustomSubject" class="form-control" placeholder="Enter subject name">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Exam Date</label>
+          <input type="date" id="inputDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Time</label>
+          <input type="time" id="inputTime" class="form-control" value="08:30">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Duration (Minutes)</label>
+        <input type="number" id="inputDuration" class="form-control" value="180" min="5" max="600">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" onclick="closeSettings()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSettings()">Save & Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Share Countdown Link</div>
+        <button class="btn" onclick="closeShareModal()">✕</button>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+        Copy this URL link and send it directly to other teachers via WhatsApp or Email:
+      </p>
+
+      <div class="form-group">
+        <input type="text" id="shareUrlInput" class="form-control" readonly style="font-family: monospace;">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="copyShareUrl()">📋 Copy Link</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State Variables
+    let config = {
+      school: "SJK(T) LORONG JAVA",
+      examTitle: "MATRIKS PEMBELAJARAN TAHUN 2 SESI 2026",
+      subject: "MATEMATIK SJK(T)",
+      date: "",
+      time: "08:30",
+      duration: 180,
+      theme: "dark"
+    };
+
+    // Initialize Default Date to Today or URL param
+    const today = new Date();
+    config.date = today.toISOString().split('T')[0];
+
+    // Read URL Parameters on Load
+    function loadUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('school')) config.school = params.get('school');
+      if (params.has('title')) config.examTitle = params.get('title');
+      if (params.has('subject')) config.subject = params.get('subject');
+      if (params.has('date')) config.date = params.get('date');
+      if (params.has('time')) config.time = params.get('time');
+      if (params.has('duration')) config.duration = parseInt(params.get('duration')) || 180;
+      if (params.has('theme')) config.theme = params.get('theme');
+
+      document.body.setAttribute('data-theme', config.theme);
+      document.getElementById('themeIcon').textContent = config.theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    // Save and Update UI
+    function updateUI() {
+      document.getElementById('displaySchool').textContent = config.school;
+      document.getElementById('displayExamTitle').textContent = config.examTitle;
+      document.getElementById('displaySubject').textContent = config.subject;
+    }
+
+    // Toggle Theme
+    function toggleTheme() {
+      config.theme = config.theme === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', config.theme);
+      document.getElementById('themeIcon').textContent = config.theme === 'dark' ? '☀️' : '🌙';
+      drawAnalogClock();
+    }
+
+    // Settings Modal Functions
+    function openSettings() {
+      document.getElementById('inputSchool').value = config.school;
+      document.getElementById('inputExamTitle').value = config.examTitle;
+      
+      const selectSub = document.getElementById('selectSubject');
+      if ([...selectSub.options].some(o => o.value === config.subject)) {
+        selectSub.value = config.subject;
+        document.getElementById('customSubjectGroup').style.display = 'none';
+      } else {
+        selectSub.value = 'CUSTOM';
+        document.getElementById('customSubjectGroup').style.display = 'block';
+        document.getElementById('inputCustomSubject').value = config.subject;
+      }
+
+      document.getElementById('inputDate').value = config.date;
+      document.getElementById('inputTime').value = config.time;
+      document.getElementById('inputDuration').value = config.duration;
+
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function handleSubjectSelect(val) {
+      document.getElementById('customSubjectGroup').style.display = val === 'CUSTOM' ? 'block' : 'none';
+    }
+
+    function saveSettings() {
+      config.school = document.getElementById('inputSchool').value.trim() || "SCHOOL NAME";
+      config.examTitle = document.getElementById('inputExamTitle').value.trim() || "EXAM TITLE";
+      
+      const subVal = document.getElementById('selectSubject').value;
+      if (subVal === 'CUSTOM') {
+        config.subject = document.getElementById('inputCustomSubject').value.trim() || "SUBJECT";
+      } else {
+        config.subject = subVal;
+      }
+
+      config.date = document.getElementById('inputDate').value;
+      config.time = document.getElementById('inputTime').value;
+      config.duration = parseInt(document.getElementById('inputDuration').value) || 120;
+
+      updateUI();
+      closeSettings();
+    }
+
+    // Share Modal
+    function openShareModal() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('school', config.school);
+      url.searchParams.set('title', config.examTitle);
+      url.searchParams.set('subject', config.subject);
+      url.searchParams.set('date', config.date);
+      url.searchParams.set('time', config.time);
+      url.searchParams.set('duration', config.duration);
+      url.searchParams.set('theme', config.theme);
+
+      const shareInput = document.getElementById('shareUrlInput');
+      shareInput.value = url.toString();
+      document.getElementById('shareModal').classList.add('active');
+    }
+
+    function closeShareModal() {
+      document.getElementById('shareModal').classList.remove('active');
+    }
+
+    function copyShareUrl() {
+      const shareInput = document.getElementById('shareUrlInput');
+      shareInput.select();
+      document.execCommand('copy');
+      alert('Share link copied to clipboard!');
+      closeShareModal();
+    }
+
+    // Analog Clock Canvas Renderer
+    function drawAnalogClock() {
+      const canvas = document.getElementById('analogClock');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const radius = canvas.width / 2;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Face
+      ctx.beginPath();
+      ctx.arc(radius, radius, radius - 4, 0, 2 * Math.PI);
+      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--clock-face').trim();
+      ctx.fill();
+      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--bg-card-border').trim();
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Hour Ticks
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * Math.PI) / 6;
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text-muted').trim();
+        const x1 = radius + Math.sin(angle) * (radius - 12);
+        const y1 = radius - Math.cos(angle) * (radius - 12);
+        const x2 = radius + Math.sin(angle) * (radius - 6);
+        const y2 = radius - Math.cos(angle) * (radius - 6);
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      const now = new Date();
+      const hrs = now.getHours() % 12;
+      const mins = now.getMinutes();
+      const secs = now.getSeconds();
+
+      // Hour Hand
+      const hrAngle = (hrs * Math.PI / 6) + (mins * Math.PI / 360);
+      drawHand(ctx, radius, hrAngle, radius * 0.5, 4, getComputedStyle(document.body).getPropertyValue('--clock-hand').trim());
+
+      // Minute Hand
+      const minAngle = (mins * Math.PI / 30) + (secs * Math.PI / 1800);
+      drawHand(ctx, radius, minAngle, radius * 0.7, 3, getComputedStyle(document.body).getPropertyValue('--clock-hand').trim());
+
+      // Second Hand
+      const secAngle = (secs * Math.PI / 30);
+      drawHand(ctx, radius, secAngle, radius * 0.8, 1.5, getComputedStyle(document.body).getPropertyValue('--clock-second').trim());
+
+      // Center Pin
+      ctx.beginPath();
+      ctx.arc(radius, radius, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--clock-second').trim();
+      ctx.fill();
+    }
+
+    function drawHand(ctx, center, angle, length, width, color) {
+      ctx.beginPath();
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = color;
+      ctx.moveTo(center, center);
+      ctx.lineTo(center + Math.sin(angle) * length, center - Math.cos(angle) * length);
+      ctx.stroke();
+    }
+
+    // Live Engine Loop
+    function tick() {
+      const now = new Date();
+
+      // Update Digital Clock
+      document.getElementById('digitalClockTime').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('digitalClockDate').textContent = now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+
+      // Draw Analog Clock
+      drawAnalogClock();
+
+      // Calculate Countdown
+      if (config.date && config.time) {
+        const examStart = new Date(`${config.date}T${config.time}:00`);
+        const examEnd = new Date(examStart.getTime() + config.duration * 60000);
+
+        // Format Strip Times
+        document.getElementById('stripStart').textContent = examStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('stripDuration').textContent = `${config.duration} mins`;
+        document.getElementById('stripEnd').textContent = examEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const badge = document.getElementById('statusBadge');
+        let diff = 0;
+
+        if (now < examStart) {
+          // Exam Upcoming - Countdown to Start
+          diff = examStart - now;
+          badge.textContent = 'COUNTDOWN TO EXAM';
+          badge.className = 'status-badge upcoming';
+        } else if (now >= examStart && now <= examEnd) {
+          // Exam Active - Countdown Remaining Test Time
+          diff = examEnd - now;
+          badge.textContent = 'EXAM IN PROGRESS';
+          badge.className = 'status-badge active';
+        } else {
+          // Exam Ended
+          diff = 0;
+          badge.textContent = 'EXAM CONCLUDED';
+          badge.className = 'status-badge ended';
+        }
+
+        const totalSecs = Math.floor(diff / 1000);
+        const days = Math.floor(totalSecs / 86400);
+        const hours = Math.floor((totalSecs % 86400) / 3600);
+        const mins = Math.floor((totalSecs % 3600) / 60);
+        const secs = totalSecs % 60;
+
+        const pad = n => String(n).padStart(2, '0');
+        
+        document.getElementById('daysVal').textContent = pad(days);
+        document.getElementById('hoursVal').textContent = pad(hours);
+        document.getElementById('minsVal').textContent = pad(mins);
+        document.getElementById('secsVal').textContent = pad(secs);
+
+        if (days > 0) {
+          document.getElementById('mainCountdownDisplay').textContent = `${days}d ${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+        } else {
+          document.getElementById('mainCountdownDisplay').textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+        }
+      }
+    }
+
+    // Startup
+    loadUrlParams();
+    updateUI();
+    setInterval(tick, 1000);
+    tick();
+  </script>
+</body>
+</html>
